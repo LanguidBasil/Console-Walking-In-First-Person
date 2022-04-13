@@ -1,6 +1,0 @@
-﻿  main.cpp
-D:\Projects\ConsoleWalkingInFirstPerson\ConsoleWalkingInFirstPerson\src\main.cpp(115,18): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-D:\Projects\ConsoleWalkingInFirstPerson\ConsoleWalkingInFirstPerson\src\main.cpp(175,11): warning C4018: '<=': signed/unsigned mismatch
-D:\Projects\ConsoleWalkingInFirstPerson\ConsoleWalkingInFirstPerson\src\main.cpp(177,16): warning C4018: '>': signed/unsigned mismatch
-D:\Projects\ConsoleWalkingInFirstPerson\ConsoleWalkingInFirstPerson\src\main.cpp(177,35): warning C4018: '<=': signed/unsigned mismatch
-  ConsoleWalkingInFirstPerson.vcxproj -> D:\Projects\ConsoleWalkingInFirstPerson\bin\Win32\Debug\ConsoleWalkingInFirstPerson.exe
