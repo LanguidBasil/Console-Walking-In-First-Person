@@ -54,10 +54,10 @@ static void HandleInput(float elapsedTime)
 {
 	float walkAmount = PLAYER_WALK_SPEED * elapsedTime;
 
-	Vector2f playerLookDir { sinf(_playerAngle), cosf(_playerAngle) };
+	Vector2f playerLookDir { cosf(_playerAngle), sinf(_playerAngle) };
 	Vector2f forwardsMoveAmount { playerLookDir.X * walkAmount, playerLookDir.Y * walkAmount };
 
-	Vector2f playerRightDir { sinf(_playerAngle + PI / 2), cosf(_playerAngle + PI / 2) };
+	Vector2f playerRightDir { cosf(_playerAngle + PI / 2), sinf(_playerAngle + PI / 2) };
 	Vector2f sidewaysMoveAmount { playerRightDir.X * walkAmount, playerRightDir.Y * walkAmount };
 
 	Vector2f playerNewPos = _playerPos;
@@ -90,7 +90,7 @@ static float GetDistanceToWall(const Vector2f& worldPos, float angle)
 {
 	const float RAY_STEP_VALUE = 0.1f;
 
-	Vector2f lookDir { sinf(angle), cosf(angle) };
+	Vector2f lookDir { cosf(angle), sinf(angle) };
 	float raycastDistance = 0.0f;
 
 	while (raycastDistance < MAX_RENDERING_DISTANCE)
