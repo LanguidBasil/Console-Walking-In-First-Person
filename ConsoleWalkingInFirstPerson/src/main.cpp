@@ -68,9 +68,9 @@ static void HandleInput(float elapsedTime)
 
 	float rotationAmount = PLAYER_ROTATION_SPEED * elapsedTime;
 
-	if (GetAsyncKeyState((unsigned short)'A') & 0x8000)
+	if (GetAsyncKeyState(VK_LEFT))
 		_playerAngle -= rotationAmount;
-	if (GetAsyncKeyState((unsigned short)'D') & 0x8000)
+	if (GetAsyncKeyState(VK_RIGHT))
 		_playerAngle += rotationAmount;
 
 	_playerAngle = fmod(_playerAngle, PI * 2);
@@ -112,7 +112,7 @@ static float GetDistanceToWall(const Vector2f& worldPos, float angle)
 static int GetScreenCeilingSizeFromDistanceToWall(float distanceToWall)
 {
 	float screenHalf = SCREEN_HEIGHT / 2.0f;
-	int ceilingSize = screenHalf - screenHalf / distanceToWall;
+	int ceilingSize = static_cast<int>(screenHalf - screenHalf / distanceToWall);
 	return std::clamp<int>(ceilingSize, 0, static_cast<int>(screenHalf));
 }
 
@@ -164,8 +164,8 @@ int main()
 			float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_WIDTH) * _playerFOV;
 			float distanceToWall = GetDistanceToWall(_playerPos, rayAngle);
 
-			int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
-			int floorSize = SCREEN_HEIGHT - ceilingSize;
+			unsigned int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
+			unsigned int floorSize = SCREEN_HEIGHT - ceilingSize;
 
 			// drawing from left top corner
 			for (size_t y = 0; y < SCREEN_HEIGHT; y++)
