@@ -5,8 +5,10 @@ Oldschooly game about mazes, walking, and nothing else :) Very simple algorithms
 
 'W' - go forwards <br/>
 'S' - go baskwards <br/>
-'A' - rotate left <br/>
-'D' - rotate right <br/>
+'A' - go right <br/>
+'D' - go left <br/>
+'→' - rotate right <br/>
+'←' - rotate left <br/>
 
 ![maze](https://user-images.githubusercontent.com/72715882/163294317-8655de71-8562-466b-8ed0-eb53b0e743dc.gif)
 
