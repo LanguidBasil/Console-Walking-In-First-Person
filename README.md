@@ -8,4 +8,6 @@ Oldschooly game about mazes, walking, and nothing else :) Very simple algorithms
 'A' - rotate left <br/>
 'D' - rotate right <br/>
 
+![maze](https://user-images.githubusercontent.com/72715882/163294317-8655de71-8562-466b-8ed0-eb53b0e743dc.gif)
+
 Project is heavily inspired by [javidx9's video](https://www.youtube.com/watch?v=xW8skO7MFYw). You can find his project repository [here](https://github.com/OneLoneCoder/CommandLineFPS)
