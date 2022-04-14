@@ -52,15 +52,25 @@ static bool WorldPosHasWall(const Vector2f& worldPos)
 
 static void HandleInput(float elapsedTime)
 {
+	float walkAmount = PLAYER_WALK_SPEED * elapsedTime;
+
 	Vector2f playerLookDir { sinf(_playerAngle), cosf(_playerAngle) };
-	float xWalkAmount = playerLookDir.X * PLAYER_WALK_SPEED * elapsedTime;
-	float yWalkAmount = playerLookDir.Y * PLAYER_WALK_SPEED * elapsedTime;
+	Vector2f forwardsMoveAmount { playerLookDir.X * walkAmount, playerLookDir.Y * walkAmount };
+
+	Vector2f playerRightDir { sinf(_playerAngle + PI / 2), cosf(_playerAngle + PI / 2) };
+	Vector2f sidewaysMoveAmount { playerRightDir.X * walkAmount, playerRightDir.Y * walkAmount };
 
 	Vector2f playerNewPos = _playerPos;
+
 	if (GetAsyncKeyState((unsigned short)'W') & 0x8000)
-		playerNewPos += Vector2f(xWalkAmount, yWalkAmount);
+		playerNewPos += forwardsMoveAmount;
 	if (GetAsyncKeyState((unsigned short)'S') & 0x8000)
-		playerNewPos -= Vector2f(xWalkAmount, yWalkAmount);
+		playerNewPos -= forwardsMoveAmount;
+
+	if (GetAsyncKeyState((unsigned short)'D') & 0x8000)
+		playerNewPos += sidewaysMoveAmount;
+	if (GetAsyncKeyState((unsigned short)'A') & 0x8000)
+		playerNewPos -= sidewaysMoveAmount;
 
 	if (!WorldPosHasWall(playerNewPos))
 		_playerPos = playerNewPos;
