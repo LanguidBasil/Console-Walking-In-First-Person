@@ -3,10 +3,9 @@
 #include <sstream>
 #include <chrono>
 #include <algorithm>
-#include <stack>
-#include <vector>
 
 #include "Vector2.h"
+#include "MazeGeneration.h"
 
 
 const float PI = 3.14159f;
@@ -28,84 +27,6 @@ float _playerFOV = PI / 4.0f;
 
 bool _mapIsVisible = true;
 
-
-// # - wall, . - empty space
-static std::wstring GenerateMaze(const int width, const int height)
-{
-	enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
-	const int mazeSize = width * height;
-	Vector2n start =	(int)(rand() % 2) == 1
-						? Vector2n( (int)(rand() % width)        , (int)(rand() % 2 * height - 1))
-						: Vector2n( (int)(rand() % 2 * width - 1), (int)(rand() % height) );
-
-	std::vector<Vector2n> visited(mazeSize, { -1, -1 } );
-	int visitedCount = 0;
-	visited[visitedCount++] = start;
-
-	std::stack<Vector2n> breadcrumbs;
-	breadcrumbs.push(start);
-
-	auto DirToVec2n = [&](const Direction dir)
-	{
-		switch (dir)
-		{
-		case Direction::Left:	return Vector2n(-1, 0);
-		case Direction::Up:		return Vector2n(0, 1);
-		case Direction::Right:	return Vector2n(1, 0);
-		case Direction::Down:	return Vector2n(0, -1);
-		}
-	};
-	auto InBounds = [&](const Vector2n& pos) { return 0 <= pos.X && pos.X < width && 0 <= pos.Y && pos.Y < height; };
-	auto InVisited = [&](const Vector2n& pos) { return std::find(visited.begin(), visited.end(), pos) != visited.end(); };
-
-
-	Vector2n currentPos = start;
-	bool availableDirections[4];
-
-	while (visitedCount < mazeSize)
-	{
-		for (size_t i = 0; i < 4; i++)
-		{
-			auto posToCheck = currentPos + DirToVec2n((Direction)i);
-			availableDirections[i] = !InVisited(posToCheck) && InBounds(posToCheck);
-		}
-
-		std::vector<Direction> dirs;
-		for (size_t i = 0; i < 4; i++)
-			if (availableDirections[i])
-				dirs.push_back((Direction)i);
-
-		if (dirs.size() != 0)
-		{
-			Direction dir = dirs[(int)(rand() % dirs.size())];
-			currentPos += DirToVec2n(dir);
-			visited[visitedCount++] = currentPos;
-			breadcrumbs.push(currentPos);
-		}
-		else
-		{
-			breadcrumbs.pop();
-			currentPos = breadcrumbs.top();
-		}
-	}
-
-	return	L"################"
-			L"#..............#"
-			L"#..............#"
-			L"#..#...........#"
-			L"#..#.......##..#"
-			L"#..#.......##..#"
-			L"#..#...........#"
-			L"#..#####.......#"
-			L"#..............#"
-			L"#......#.......#"
-			L"#......#.......#"
-			L"#..............#"
-			L"#..............#"
-			L"#..............#"
-			L"#..............#"
-			L"################";
-}
 
 static bool WorldPosHasWall(const std::wstring& map, const Vector2f& worldPos)
 {
