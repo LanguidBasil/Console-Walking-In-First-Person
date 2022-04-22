@@ -3,6 +3,8 @@
 #include <sstream>
 #include <chrono>
 #include <algorithm>
+#include <stack>
+#include <vector>
 
 #include "Vector2.h"
 
@@ -11,8 +13,8 @@ const float PI = 3.14159f;
 
 const int SCREEN_WIDTH = 120;
 const int SCREEN_HEIGHT = 40;
-const int MAP_WIDTH = 16;
-const int MAP_HEIGHT = 16;
+const int MAP_WIDTH = 4;
+const int MAP_HEIGHT = 4;
 
 const float MAX_RENDERING_DISTANCE = 16.0f;
 
@@ -21,33 +23,86 @@ const float PLAYER_ROTATION_SPEED = 1.6f;
 
 
 Vector2f _playerPos { 9.0f, 12.29f }; // also starting values
-float _playerAngle = -PI / 6.0f * 5.0f;
+float _playerAngle = - PI / 2;
 float _playerFOV = PI / 4.0f;
 
+// # - wall, . - empty space
+static std::wstring GenerateMaze(const int width, const int height)
+{
+	const int mazeSize = width * height;
+	Vector2n start { (int)(rand() % width), (int)(rand() % height) };
 
-// '#' wall, '.' empty space
-const std::wstring map =
-L"################"
-L"#..............#"
-L"#..............#"
-L"#..#...........#"
-L"#..#.......##..#"
-L"#..#.......##..#"
-L"#..#...........#"
-L"#..#####.......#"
-L"#..............#"
-L"#......#.......#"
-L"#......#.......#"
-L"#..............#"
-L"#..............#"
-L"#..............#"
-L"################";
+	std::vector<Vector2n> visited(mazeSize);
+	int visitedCount = 0;
+	visited[visitedCount++] = start;
+
+	enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
+	auto DirToVec2n = [&](const Direction dir)
+	{
+		switch (dir)
+		{
+		case Direction::Left:	return Vector2n(-1, 0);
+		case Direction::Up:		return Vector2n(0, 1);
+		case Direction::Right:	return Vector2n(1, 0);
+		case Direction::Down:	return Vector2n(0, -1);
+		}
+	};
+	auto InBounds = [&](const Vector2n& pos) { return 0 <= pos.X && pos.X < width && 0 <= pos.Y && pos.Y < height; };
+	auto InVisited = [&](const Vector2n& pos) { return std::find(visited.begin(), visited.end(), pos) != visited.end(); };
+
+	Vector2n currentPos = start;
+	bool availableDirections[] { true, true, true, true };
+
+	for (size_t i = 0; i < 4; i++)
+	{
+		auto posToCheck = currentPos + DirToVec2n((Direction)i);
+		availableDirections[i] = !InVisited(posToCheck) && InBounds(posToCheck);
+	}
+
+	while (visitedCount < mazeSize)
+	{
+		bool canMove = true;
+		for (size_t i = 0; i < 4; i++)
+			canMove *= availableDirections[i];
+
+		if (canMove)
+		{
+			// pick random
+		}
+		else
+		{
+			// return
+		}
+
+		visitedCount++;
+	}
+
+	return	L"################"
+			L"#..............#"
+			L"#..............#"
+			L"#..#...........#"
+			L"#..#.......##..#"
+			L"#..#.......##..#"
+			L"#..#...........#"
+			L"#..#####.......#"
+			L"#..............#"
+			L"#......#.......#"
+			L"#......#.......#"
+			L"#..............#"
+			L"#..............#"
+			L"#..............#"
+			L"#..............#"
+			L"################";
+}
+const std::wstring _map = GenerateMaze(MAP_WIDTH, MAP_HEIGHT);
+
+bool _mapIsVisible = true;
 
 
 static bool WorldPosHasWall(const Vector2f& worldPos)
 {
-	Vector2n mapPosToCheck { static_cast<int>(worldPos.X), static_cast<int>(worldPos.Y) };
-	return map[mapPosToCheck.Y * MAP_WIDTH + mapPosToCheck.X] == '#';
+	Vector2n mapPosToCheck { (int)worldPos.X, (int)worldPos.Y };
+	return _map[mapPosToCheck.Y * MAP_WIDTH + mapPosToCheck.X] == '#';
 }
 
 static void HandleInput(float elapsedTime)
@@ -84,6 +139,9 @@ static void HandleInput(float elapsedTime)
 		_playerAngle += rotationAmount;
 
 	_playerAngle = fmod(_playerAngle, PI * 2);
+
+	if (GetAsyncKeyState((unsigned short)'M') & 0x0001)
+		_mapIsVisible = !_mapIsVisible;
 }
 
 static float GetDistanceToWall(const Vector2f& worldPos, float angle)
@@ -153,6 +211,8 @@ static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 
 int main()
 {
+	srand(time(NULL));
+
 	wchar_t* screen = new wchar_t[SCREEN_WIDTH * SCREEN_HEIGHT];
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleActiveScreenBuffer(hConsole);
@@ -189,6 +249,14 @@ int main()
 				else
 					screen[screenIndex] = GetFloorShadeFromScreenY(y);
 			}
+		}
+
+		if (_mapIsVisible)
+		{
+			for (size_t y = 0; y < MAP_HEIGHT; y++)
+				for (size_t x = 0; x < MAP_WIDTH; x++)
+					screen[y * SCREEN_WIDTH + x] = _map[y * MAP_WIDTH + x];
+			screen[(int)_playerPos.Y * SCREEN_WIDTH + (int)_playerPos.X] = L'P';
 		}
 
 		PrintDebugMessage(screen, elapsedTime.count());
