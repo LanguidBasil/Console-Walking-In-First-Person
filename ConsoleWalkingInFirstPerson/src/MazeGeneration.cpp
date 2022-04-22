@@ -3,8 +3,6 @@
 #include <vector>
 #include <stack>
 
-#include "Vector2.h"
-
 enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
 
 static Vector2n DirectionToVector2n(const Direction dir)
@@ -76,9 +74,28 @@ static std::vector<Vector2n> GeneratePath(const int width, const int height)
 	return visited;
 }
 
+Vector2n CalculateMapDimensions(const int width, const int height)
+{
+	return { width * 2 + 1, height * 2 + 1 };
+}
+
 static std::wstring GenerateMap(const std::vector<Vector2n> path, const int width, const int height)
 {
-	return L"";
+	const Vector2n MAP_DIM = CalculateMapDimensions(width, height);
+	std::wstring map(MAP_DIM.X * MAP_DIM.Y, '.');
+
+	for (size_t x = 0; x < MAP_DIM.X; x++)
+	{
+		map[x] = '#';
+		map[(MAP_DIM.Y - 1) * MAP_DIM.X + x] = '#';
+	}
+	for (size_t y = 0; y < MAP_DIM.Y; y++)
+	{
+		map[y * MAP_DIM.X] = '#';
+		map[y * MAP_DIM.X + MAP_DIM.Y - 1] = '#';
+	}
+
+	return map;
 }
 
 std::wstring GenerateMaze(const int width, const int height)
