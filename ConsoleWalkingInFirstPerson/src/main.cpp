@@ -29,14 +29,19 @@ float _playerFOV = PI / 4.0f;
 // # - wall, . - empty space
 static std::wstring GenerateMaze(const int width, const int height)
 {
+	enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
 	const int mazeSize = width * height;
-	Vector2n start { (int)(rand() % width), (int)(rand() % height) };
+	Vector2n start =	(int)(rand() % 2) == 1
+						? Vector2n( (int)(rand() % width)        , (int)(rand() % 2 * height - 1))
+						: Vector2n( (int)(rand() % 2 * width - 1), (int)(rand() % height) );
 
-	std::vector<Vector2n> visited(mazeSize);
+	std::vector<Vector2n> visited(mazeSize, { -1, -1 } );
 	int visitedCount = 0;
 	visited[visitedCount++] = start;
 
-	enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
+	std::stack<Vector2n> breadcrumbs;
+	breadcrumbs.push(start);
+
 	auto DirToVec2n = [&](const Direction dir)
 	{
 		switch (dir)
@@ -50,31 +55,35 @@ static std::wstring GenerateMaze(const int width, const int height)
 	auto InBounds = [&](const Vector2n& pos) { return 0 <= pos.X && pos.X < width && 0 <= pos.Y && pos.Y < height; };
 	auto InVisited = [&](const Vector2n& pos) { return std::find(visited.begin(), visited.end(), pos) != visited.end(); };
 
-	Vector2n currentPos = start;
-	bool availableDirections[] { true, true, true, true };
 
-	for (size_t i = 0; i < 4; i++)
-	{
-		auto posToCheck = currentPos + DirToVec2n((Direction)i);
-		availableDirections[i] = !InVisited(posToCheck) && InBounds(posToCheck);
-	}
+	Vector2n currentPos = start;
+	bool availableDirections[4];
 
 	while (visitedCount < mazeSize)
 	{
-		bool canMove = true;
 		for (size_t i = 0; i < 4; i++)
-			canMove *= availableDirections[i];
-
-		if (canMove)
 		{
-			// pick random
+			auto posToCheck = currentPos + DirToVec2n((Direction)i);
+			availableDirections[i] = !InVisited(posToCheck) && InBounds(posToCheck);
+		}
+
+		std::vector<Direction> dirs;
+		for (size_t i = 0; i < 4; i++)
+			if (availableDirections[i])
+				dirs.push_back((Direction)i);
+
+		if (dirs.size() != 0)
+		{
+			Direction dir = dirs[(int)(rand() % dirs.size())];
+			currentPos += DirToVec2n(dir);
+			visited[visitedCount++] = currentPos;
+			breadcrumbs.push(currentPos);
 		}
 		else
 		{
-			// return
+			breadcrumbs.pop();
+			currentPos = breadcrumbs.top();
 		}
-
-		visitedCount++;
 	}
 
 	return	L"################"
