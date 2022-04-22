@@ -26,6 +26,9 @@ Vector2f _playerPos { 9.0f, 12.29f }; // also starting values
 float _playerAngle = - PI / 2;
 float _playerFOV = PI / 4.0f;
 
+bool _mapIsVisible = true;
+
+
 // # - wall, . - empty space
 static std::wstring GenerateMaze(const int width, const int height)
 {
@@ -103,18 +106,14 @@ static std::wstring GenerateMaze(const int width, const int height)
 			L"#..............#"
 			L"################";
 }
-const std::wstring _map = GenerateMaze(MAP_WIDTH, MAP_HEIGHT);
 
-bool _mapIsVisible = true;
-
-
-static bool WorldPosHasWall(const Vector2f& worldPos)
+static bool WorldPosHasWall(const std::wstring& map, const Vector2f& worldPos)
 {
 	Vector2n mapPosToCheck { (int)worldPos.X, (int)worldPos.Y };
-	return _map[mapPosToCheck.Y * MAP_WIDTH + mapPosToCheck.X] == '#';
+	return map[mapPosToCheck.Y * MAP_WIDTH + mapPosToCheck.X] == '#';
 }
 
-static void HandleInput(float elapsedTime)
+static void HandleInput(const std::wstring& map, float elapsedTime)
 {
 	float walkAmount = PLAYER_WALK_SPEED * elapsedTime;
 
@@ -136,7 +135,7 @@ static void HandleInput(float elapsedTime)
 	if (GetAsyncKeyState((unsigned short)'A') & 0x8000)
 		playerNewPos -= sidewaysMoveAmount;
 
-	if (!WorldPosHasWall(playerNewPos))
+	if (!WorldPosHasWall(map, playerNewPos))
 		_playerPos = playerNewPos;
 
 
@@ -153,7 +152,7 @@ static void HandleInput(float elapsedTime)
 		_mapIsVisible = !_mapIsVisible;
 }
 
-static float GetDistanceToWall(const Vector2f& worldPos, float angle)
+static float GetDistanceToWall(const std::wstring& map, const Vector2f& worldPos, float angle)
 {
 	const float RAY_STEP_VALUE = 0.1f;
 
@@ -178,7 +177,7 @@ static float GetDistanceToWall(const Vector2f& worldPos, float angle)
 		}
 		else
 		{
-			if (WorldPosHasWall(pointToCheckForWall))
+			if (WorldPosHasWall(map, pointToCheckForWall))
 				break;
 		}
 	}
@@ -221,6 +220,7 @@ static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 int main()
 {
 	srand(time(NULL));
+	const std::wstring map = GenerateMaze(MAP_WIDTH, MAP_HEIGHT);
 
 	wchar_t* screen = new wchar_t[SCREEN_WIDTH * SCREEN_HEIGHT];
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
@@ -236,12 +236,12 @@ int main()
 		std::chrono::duration<float> elapsedTime = thisFrameTime - lastFrameTime;
 		lastFrameTime = thisFrameTime;
 
-		HandleInput(elapsedTime.count());
+		HandleInput(map, elapsedTime.count());
 
 		for (size_t x = 0; x < SCREEN_WIDTH; x++)
 		{
 			float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_WIDTH) * _playerFOV;
-			float distanceToWall = GetDistanceToWall(_playerPos, rayAngle);
+			float distanceToWall = GetDistanceToWall(map, _playerPos, rayAngle);
 
 			unsigned int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
 			unsigned int floorSize = SCREEN_HEIGHT - ceilingSize;
@@ -264,7 +264,7 @@ int main()
 		{
 			for (size_t y = 0; y < MAP_HEIGHT; y++)
 				for (size_t x = 0; x < MAP_WIDTH; x++)
-					screen[y * SCREEN_WIDTH + x] = _map[y * MAP_WIDTH + x];
+					screen[y * SCREEN_WIDTH + x] = map[y * MAP_WIDTH + x];
 			screen[(int)_playerPos.Y * SCREEN_WIDTH + (int)_playerPos.X] = L'P';
 		}
 
