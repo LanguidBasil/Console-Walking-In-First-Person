@@ -133,8 +133,7 @@ static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 
 int main()
 {
-	//srand(time(NULL));
-	srand(0);
+	srand(time(NULL));
 	const std::wstring map = GenerateMaze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
 	const Vector2n mapDimensions = CalculateMapDimensions(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
 

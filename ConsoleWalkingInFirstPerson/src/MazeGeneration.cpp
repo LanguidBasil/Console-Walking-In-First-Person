@@ -5,6 +5,9 @@
 
 enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
 
+Vector2n _mazeDimensions;
+Vector2n _mapDimensions;
+
 static Vector2n DirectionToVector2n(const Direction dir)
 {
 	switch (dir)
@@ -16,9 +19,9 @@ static Vector2n DirectionToVector2n(const Direction dir)
 	}
 }
 
-static bool InBounds(const Vector2n& pos, const int width, const int height)
+static bool InMazeBounds(const Vector2n& pos)
 {
-	return 0 <= pos.X && pos.X < width && 0 <= pos.Y && pos.Y < height;
+	return 0 <= pos.X && pos.X < _mazeDimensions.X && 0 <= pos.Y && pos.Y < _mazeDimensions.Y;
 }
 
 static bool Contains(const std::vector<Vector2n> vec, const Vector2n& pos)
@@ -26,12 +29,12 @@ static bool Contains(const std::vector<Vector2n> vec, const Vector2n& pos)
 	return std::find(vec.begin(), vec.end(), pos) != vec.end();
 }
 
-static std::vector<Vector2n> GeneratePath(const int width, const int height)
+static std::vector<Vector2n> GeneratePath()
 {
-	const int mazeSize = width * height;
+	const int mazeSize = _mazeDimensions.X * _mazeDimensions.Y;
 	Vector2n start = (int)(rand() % 2) == 1
-						? Vector2n((int)(rand() % width)          , (int)(rand() % 2 * (height - 1)))
-						: Vector2n((int)(rand() % 2 * (width - 1)), (int)(rand() % height));
+						? Vector2n((int)(rand() % _mazeDimensions.X)          , (int)(rand() % 2 * (_mazeDimensions.Y - 1)))
+						: Vector2n((int)(rand() % 2 * (_mazeDimensions.X - 1)), (int)(rand() % _mazeDimensions.Y));
 
 	std::vector<Vector2n> visited(mazeSize, { -1, -1 });
 	int visitedCount = 0;
@@ -49,7 +52,7 @@ static std::vector<Vector2n> GeneratePath(const int width, const int height)
 		for (size_t i = 0; i < 4; i++)
 		{
 			auto posToCheck = currentPos + DirectionToVector2n((Direction)i);
-			availableDirections[i] = !Contains(visited, posToCheck) && InBounds(posToCheck, width, height);
+			availableDirections[i] = !Contains(visited, posToCheck) && InMazeBounds(posToCheck);
 		}
 
 		std::vector<Direction> dirs;
@@ -74,15 +77,15 @@ static std::vector<Vector2n> GeneratePath(const int width, const int height)
 	return visited;
 }
 
-static Vector2n MazePosToMapPos(const Vector2n& mazePosition, const int width, const int height)
+static Vector2n MazePosToMapPos(const Vector2n& mazePosition)
 {
 	return { mazePosition.X * 2 + 1, mazePosition.Y * 2 + 1 };
 }
 
-static int MazePosToMapIndex(const Vector2n& mazePosition, const int width, const int height)
+static int MazePosToMapIndex(const Vector2n& mazePosition)
 {
-	Vector2n mazePos = MazePosToMapPos(mazePosition, width, height);
-	return mazePos.X * width + mazePos.Y;
+	Vector2n mazePos = MazePosToMapPos(mazePosition);
+	return mazePos.X * _mapDimensions.X + mazePos.Y;
 }
 
 static Vector2n PointBetween(const Vector2n& lhs, const Vector2n& rhs)
@@ -90,14 +93,13 @@ static Vector2n PointBetween(const Vector2n& lhs, const Vector2n& rhs)
 	return { (lhs.X + rhs.X) / 2, (lhs.Y + rhs.Y) / 2 };
 }
 
-static std::wstring GenerateMap(const std::vector<Vector2n>& path, const int width, const int height)
+static std::wstring GenerateMap(const std::vector<Vector2n>& path)
 {
-	const Vector2n MAP_DIM = CalculateMapDimensions(width, height);
-	std::wstring map(MAP_DIM.X * MAP_DIM.Y, '#');
+	std::wstring map(_mapDimensions.X * _mapDimensions.Y, '#');
 
 	std::stack<Vector2n> pathToDraw;
 	pathToDraw.push(path[0]);
-	map[MazePosToMapIndex(path[0], MAP_DIM.X, MAP_DIM.Y)] = '.';
+	map[MazePosToMapIndex(path[0])] = '.';
 
 	for (size_t i = 1; i < path.size(); i++)
 	{
@@ -111,9 +113,9 @@ static std::wstring GenerateMap(const std::vector<Vector2n>& path, const int wid
 		}
 		else
 		{
-			auto pointBetween = PointBetween(MazePosToMapPos(thisPoint, width, height), MazePosToMapPos(nextPoint, width, height));
-			map[pointBetween.Y * MAP_DIM.X + pointBetween.X] = '.';
-			map[MazePosToMapIndex(nextPoint, MAP_DIM.X, MAP_DIM.Y)] = '.';
+			auto pointBetween = PointBetween(MazePosToMapPos(thisPoint), MazePosToMapPos(nextPoint));
+			map[pointBetween.Y * _mapDimensions.X + pointBetween.X] = '.';
+			map[MazePosToMapIndex(nextPoint)] = '.';
 
 			pathToDraw.push(nextPoint);
 		}
@@ -129,6 +131,24 @@ Vector2n CalculateMapDimensions(const int width, const int height)
 
 std::wstring GenerateMaze(const int width, const int height)
 {
-	std::vector<Vector2n> path(GeneratePath(width, height));
-	return GenerateMap(path, width, height);
+	_mazeDimensions = { width, height };
+	_mapDimensions = CalculateMapDimensions(width, height);
+
+	std::vector<Vector2n> path(GeneratePath());
+	std::wstring map = GenerateMap(path);
+
+	// add exit
+	const Vector2n& startMazePoint = path[0];
+	Vector2n startMapPoint = MazePosToMapPos(path[0]);
+	if (startMazePoint.X == 0)
+		startMapPoint += DirectionToVector2n(Direction::Left);
+	else if (startMazePoint.Y == 0)
+		startMapPoint += DirectionToVector2n(Direction::Down);
+	else if (startMazePoint.X == (width - 1))
+		startMapPoint += DirectionToVector2n(Direction::Right);
+	else if (startMazePoint.Y == (height - 1))
+		startMapPoint += DirectionToVector2n(Direction::Up);
+	map[startMapPoint.Y * _mapDimensions.X + startMapPoint.X] = '.';
+
+	return map;
 }
