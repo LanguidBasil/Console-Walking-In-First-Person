@@ -82,18 +82,7 @@ Vector2n CalculateMapDimensions(const int width, const int height)
 static std::wstring GenerateMap(const std::vector<Vector2n> path, const int width, const int height)
 {
 	const Vector2n MAP_DIM = CalculateMapDimensions(width, height);
-	std::wstring map(MAP_DIM.X * MAP_DIM.Y, '.');
-
-	for (size_t x = 0; x < MAP_DIM.X; x++)
-	{
-		map[x] = '#';
-		map[(MAP_DIM.Y - 1) * MAP_DIM.X + x] = '#';
-	}
-	for (size_t y = 0; y < MAP_DIM.Y; y++)
-	{
-		map[y * MAP_DIM.X] = '#';
-		map[y * MAP_DIM.X + MAP_DIM.Y - 1] = '#';
-	}
+	std::wstring map(MAP_DIM.X * MAP_DIM.Y, '#');
 
 	return map;
 }

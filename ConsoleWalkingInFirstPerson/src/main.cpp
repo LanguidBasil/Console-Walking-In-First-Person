@@ -29,7 +29,11 @@ bool _mapIsVisible = true;
 static bool WorldPosHasWall(const std::wstring& map, const Vector2n& mapDimensions, const Vector2f& worldPos)
 {
 	Vector2n mapPosToCheck { (int)worldPos.X, (int)worldPos.Y };
-	return map[mapPosToCheck.Y * mapDimensions.X + mapPosToCheck.X] == '#';
+	if (0 <= mapPosToCheck.X && mapPosToCheck.X < mapDimensions.X && 
+		0 <= mapPosToCheck.Y && mapPosToCheck.Y < mapDimensions.Y)
+		return map[mapPosToCheck.Y * mapDimensions.X + mapPosToCheck.X] == '#';
+	else
+		return false;
 }
 
 static void HandleInput(const std::wstring& map, const Vector2n& mapDimensions, float elapsedTime)
@@ -88,17 +92,8 @@ static float GetDistanceToWall(const std::wstring& map, const Vector2n& mapDimen
 			lookDir.Y * raycastDistance + worldPos.Y
 		};
 
-		if (pointToCheckForWall.X < 0 || pointToCheckForWall.X >= mapDimensions.X ||
-			pointToCheckForWall.Y < 0 || pointToCheckForWall.Y >= mapDimensions.Y)
-		{
-			raycastDistance = MAX_RENDERING_DISTANCE;
+		if (WorldPosHasWall(map, mapDimensions, pointToCheckForWall))
 			break;
-		}
-		else
-		{
-			if (WorldPosHasWall(map, mapDimensions, pointToCheckForWall))
-				break;
-		}
 	}
 
 	return raycastDistance;
