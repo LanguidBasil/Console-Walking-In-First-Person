@@ -133,7 +133,8 @@ static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 
 int main()
 {
-	srand(time(NULL));
+	//srand(time(NULL));
+	srand(0);
 	const std::wstring map = GenerateMaze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
 	const Vector2n mapDimensions = CalculateMapDimensions(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
 
@@ -179,7 +180,7 @@ int main()
 		{
 			for (size_t y = 0; y < mapDimensions.Y; y++)
 				for (size_t x = 0; x < mapDimensions.X; x++)
-					screen[y * SCREEN_DIMENSIONS.X + x] = map[y * mapDimensions.X + x];
+					screen[(y + 1) * SCREEN_DIMENSIONS.X + x] = map[y * mapDimensions.X + x];
 			screen[(int)_playerPos.Y * SCREEN_DIMENSIONS.X + (int)_playerPos.X] = L'P';
 		}
 
