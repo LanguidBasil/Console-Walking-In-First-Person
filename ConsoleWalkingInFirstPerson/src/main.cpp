@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "Vector2.h"
-#include "MazeGeneration.h"
+#include "Maze.h"
 
 
 const float PI = 3.14159f;

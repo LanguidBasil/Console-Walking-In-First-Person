@@ -1,7 +1,9 @@
-#include "MazeGeneration.h"
+#include "Maze.h"
 
 #include <vector>
 #include <stack>
+
+#include "Vector2.h"
 
 enum class Direction { Left = 0, Up = 1, Right = 2, Down = 3 };
 

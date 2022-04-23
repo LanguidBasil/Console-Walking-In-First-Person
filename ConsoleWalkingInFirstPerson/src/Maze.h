@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include "Vector2.h"
 
 class Maze
 {
