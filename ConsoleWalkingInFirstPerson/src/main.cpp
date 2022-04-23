@@ -131,6 +131,10 @@ static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 	swprintf_s(screen, 38, L"X=%3.2f, Y=%3.2f, A=%3.2f, FPS=%6.0f", _playerPos.X, _playerPos.Y, _playerAngle, 1.0f / elapsedTime);
 }
 
+// TODO: spawn player in maze
+// TODO: add exit-meter that tells how close you are to exit
+// TODO: add game restart
+// TODO: add game menu
 int main()
 {
 	srand(time(NULL));
