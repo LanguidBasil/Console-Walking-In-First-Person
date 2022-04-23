@@ -124,15 +124,10 @@ static std::wstring GenerateMap(const std::vector<Vector2n>& path)
 	return map;
 }
 
-Vector2n CalculateMapDimensions(const int width, const int height)
-{
-	return { width * 2 + 1, height * 2 + 1 };
-}
-
-std::wstring GenerateMaze(const int width, const int height)
+static std::wstring GenerateMaze(const int width, const int height)
 {
 	_mazeDimensions = { width, height };
-	_mapDimensions = CalculateMapDimensions(width, height);
+	_mapDimensions = { width * 2 + 1, height * 2 + 1 };
 
 	std::vector<Vector2n> path(GeneratePath());
 	std::wstring map = GenerateMap(path);
@@ -151,4 +146,21 @@ std::wstring GenerateMaze(const int width, const int height)
 	map[startMapPoint.Y * _mapDimensions.X + startMapPoint.X] = '.';
 
 	return map;
+}
+
+Maze::Maze(const int width, const int height)
+	: WIDTH(width * 2 + 1), HEIGHT(height * 2 + 1), map(GenerateMaze(width, height))
+{}
+
+Maze::~Maze() {}
+
+int Maze::GetWidth() const { return WIDTH; }
+
+int Maze::GetHeight() const { return HEIGHT; }
+
+const std::wstring& Maze::GetMap() const { return map; }
+
+void Maze::Regenerate()
+{
+	map = GenerateMaze(WIDTH, HEIGHT);
 }

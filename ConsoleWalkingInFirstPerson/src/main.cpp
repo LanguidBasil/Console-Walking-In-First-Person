@@ -19,7 +19,7 @@ const float PLAYER_WALK_SPEED = 5.0f;
 const float PLAYER_ROTATION_SPEED = 1.6f;
 
 
-Vector2f _playerPos { 9.0f, 12.29f }; // also starting values
+Vector2f _playerPos { 10.0f, 10.0f };
 float _playerAngle = - PI / 2;
 float _playerFOV = PI / 4.0f;
 
@@ -128,18 +128,21 @@ static wchar_t GetFloorShadeFromScreenY(int y)
 
 static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
 {
-	swprintf_s(screen, 38, L"X=%3.2f, Y=%3.2f, A=%3.2f, FPS=%6.0f", _playerPos.X, _playerPos.Y, _playerAngle, 1.0f / elapsedTime);
+	swprintf_s(screen, 40, L"X=%3.2f, Y=%3.2f, A=%3.2f, FPS=%6.0f", _playerPos.X, _playerPos.Y, _playerAngle, 1.0f / elapsedTime);
 }
 
+// ranked by importance
 // TODO: spawn player in maze
 // TODO: add exit-meter that tells how close you are to exit
 // TODO: add game restart
 // TODO: add game menu
+// TODO: use wide chars only for screen rendering, maze generation should be char
 int main()
 {
 	srand(time(NULL));
-	const std::wstring map = GenerateMaze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
-	const Vector2n mapDimensions = CalculateMapDimensions(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
+	const Maze maze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
+	const Vector2n mazeDim { maze.GetWidth(), maze.GetHeight() };
+	const std::wstring map = maze.GetMap();
 
 	wchar_t* screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
@@ -155,12 +158,12 @@ int main()
 		std::chrono::duration<float> elapsedTime = thisFrameTime - lastFrameTime;
 		lastFrameTime = thisFrameTime;
 
-		HandleInput(map, mapDimensions, elapsedTime.count());
+		HandleInput(map, mazeDim, elapsedTime.count());
 
 		for (size_t x = 0; x < SCREEN_DIMENSIONS.X; x++)
 		{
 			float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_DIMENSIONS.X) * _playerFOV;
-			float distanceToWall = GetDistanceToWall(map, mapDimensions, _playerPos, rayAngle);
+			float distanceToWall = GetDistanceToWall(map, mazeDim, _playerPos, rayAngle);
 
 			unsigned int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
 			unsigned int floorSize = SCREEN_DIMENSIONS.Y - ceilingSize;
@@ -181,9 +184,9 @@ int main()
 
 		if (_mapIsVisible)
 		{
-			for (size_t y = 0; y < mapDimensions.Y; y++)
-				for (size_t x = 0; x < mapDimensions.X; x++)
-					screen[(y + 1) * SCREEN_DIMENSIONS.X + x] = map[y * mapDimensions.X + x];
+			for (size_t y = 0; y < mazeDim.Y; y++)
+				for (size_t x = 0; x < mazeDim.X; x++)
+					screen[y * SCREEN_DIMENSIONS.X + x] = map[y * mazeDim.X + x];
 			screen[(int)_playerPos.Y * SCREEN_DIMENSIONS.X + (int)_playerPos.X] = L'P';
 		}
 

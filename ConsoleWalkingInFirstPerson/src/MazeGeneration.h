@@ -3,7 +3,20 @@
 #include <string>
 #include "Vector2.h"
 
-// # - wall, . - empty space
-std::wstring GenerateMaze(const int width, const int height);
+class Maze
+{
+public:
+	Maze(const int width, const int height);
+	~Maze();
 
-Vector2n CalculateMapDimensions(const int width, const int height);
+	int GetWidth() const;
+	int GetHeight() const;
+	const std::wstring& GetMap() const;
+
+	void Regenerate();
+
+private:
+	const int WIDTH, HEIGHT;
+	// # - wall, . - empty space
+	std::wstring map;
+};
