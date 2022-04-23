@@ -27,6 +27,8 @@ struct Vector2n
 	Vector2n();
 	Vector2n(int x, int y);
 
+	static const Vector2n	Abs(const Vector2n& vector);
+
 	static const Vector2n	Add(const Vector2n& lhs, const Vector2n& rhs);
 	static const Vector2n	Subtract(const Vector2n& lhs, const Vector2n& rhs);
 	static const bool		Equals(const Vector2n& lhs, const Vector2n& rhs);

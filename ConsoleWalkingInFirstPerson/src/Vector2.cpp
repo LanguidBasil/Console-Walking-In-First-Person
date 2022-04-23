@@ -1,5 +1,7 @@
 #include "Vector2.h"
 
+#include <cmath>
+
 Vector2f::Vector2f()
 	: X(), Y()
 {}
@@ -46,6 +48,11 @@ Vector2n::Vector2n()
 Vector2n::Vector2n(int x, int y)
 	: X(x), Y(y)
 {}
+
+const Vector2n	Vector2n::Abs(const Vector2n& vector)
+{
+	return { std::abs(vector.X), std::abs(vector.Y) };
+}
 
 const Vector2n	Vector2n::Add(const Vector2n& lhs, const Vector2n& rhs)
 {
