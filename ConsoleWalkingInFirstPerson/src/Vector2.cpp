@@ -10,6 +10,10 @@ Vector2f::Vector2f(float x, float y)
 	: X(x), Y(y)
 {}
 
+Vector2f::Vector2f(const Vector2n& other)
+	: X(other.Y), Y(other.Y)
+{}
+
 const Vector2f	Vector2f::Add(const Vector2f& lhs, const Vector2f& rhs)
 {
 	return { lhs.X + rhs.X, lhs.Y + rhs.Y };

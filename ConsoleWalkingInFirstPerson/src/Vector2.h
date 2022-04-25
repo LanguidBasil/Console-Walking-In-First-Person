@@ -1,5 +1,7 @@
 #pragma once
 
+struct Vector2n;
+
 struct Vector2f
 {
 	float X;
@@ -7,6 +9,7 @@ struct Vector2f
 
 	Vector2f();
 	Vector2f(float x, float y);
+	Vector2f(const Vector2n& other);
 
 	static const Vector2f	Add(const Vector2f& lhs, const Vector2f& rhs);
 	static const Vector2f	Subtract(const Vector2f& lhs, const Vector2f& rhs);
