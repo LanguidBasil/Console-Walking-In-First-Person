@@ -8,8 +8,10 @@
 class Maze
 {
 public:
-	Maze(const int width, const int height);
+	Maze();
 	~Maze();
+
+	void Generate(const int width, const int height);
 
 	int GetMazeWidth() const;
 	int GetMazeHeight() const;
@@ -23,11 +25,11 @@ public:
 	Vector2n GetExitPos() const;
 
 private:
-	const int MAZE_WIDTH, MAZE_HEIGHT;
+	int MAZE_WIDTH, MAZE_HEIGHT;
 	std::vector<Vector2n> _mazePath;
 
 	// # - wall, . - empty space
-	const int MAP_WIDTH, MAP_HEIGHT;
+	int MAP_WIDTH, MAP_HEIGHT;
 	std::wstring _map;
 
 	Vector2n _startMapPosition;

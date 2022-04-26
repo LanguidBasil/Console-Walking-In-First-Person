@@ -43,15 +43,26 @@ static Vector2n PointBetween(const Vector2n& lhs, const Vector2n& rhs)
 }
 
 
-Maze::Maze(const int width, const int height)
-	:	MAZE_WIDTH(width), MAZE_HEIGHT(height), MAP_WIDTH(width * 2 + 1), MAP_HEIGHT(height * 2 + 1), 
-		_mazePath(_GenerateMazePath()), _map(_GenerateMap()),
-		_endMapPosition(_GenerateMapEndPosition()), _startMapPosition(_GenerateMapStartPosition())
-{
-	_map[_endMapPosition.Y * MAP_WIDTH + _endMapPosition.X] = '.';
-}
+Maze::Maze()
+	:	MAZE_WIDTH(0), MAZE_HEIGHT(0), MAP_WIDTH(0), MAP_HEIGHT(0), 
+		_mazePath(), _map(),
+		_endMapPosition(), _startMapPosition()
+{}
 
 Maze::~Maze() {}
+
+void Maze::Generate(const int width, const int height)
+{
+	MAZE_WIDTH = width; MAZE_HEIGHT = height;
+	MAP_WIDTH = width * 2 + 1;  MAP_HEIGHT = height * 2 + 1;
+
+	_mazePath = _GenerateMazePath();
+	_map = _GenerateMap();
+	_endMapPosition = _GenerateMapEndPosition();
+	_startMapPosition = _GenerateMapStartPosition();
+	
+	_map[_endMapPosition.Y * MAP_WIDTH + _endMapPosition.X] = '.';
+}
 
 std::vector<Vector2n> Maze::_GenerateMazePath()
 {

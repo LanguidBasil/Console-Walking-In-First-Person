@@ -4,6 +4,7 @@
 #include <sstream>
 #include <chrono>
 #include <algorithm>
+#include <iostream>
 
 #include "Vector2.h"
 #include "Maze.h"
@@ -24,6 +25,8 @@ Vector2f _playerPos { 10.0f, 10.0f };
 float _playerAngle = - PI / 2;
 float _playerFOV = PI / 4.0f;
 
+bool _wantToPlay = true; 
+bool _gameOver = false;
 bool _mapIsVisible = true;
 
 
@@ -195,6 +198,13 @@ static void WriteMap(wchar_t* screen, const std::wstring& map, const Vector2n& m
 	screen[((int)_playerPos.Y + screenYOffset) * SCREEN_DIMENSIONS.X + (int)_playerPos.X] = L'P';
 }
 
+static void WriteGameOver(wchar_t* screen)
+{
+	auto message = L"You won! Press 'space' if you want to try again...";
+	for (size_t i = 0; i < wcslen(message); i++)
+		screen[i] = message[i];
+}
+
 static void WriteDebugMessage(wchar_t* screen, int screenYOffset, float elapsedTime, float distanceToEnd)
 {
 	wchar_t message[45];
@@ -205,48 +215,70 @@ static void WriteDebugMessage(wchar_t* screen, int screenYOffset, float elapsedT
 		screen[screenYOffset * SCREEN_DIMENSIONS.X + i] = message[i];
 }
 
+static void Print(wchar_t* screen, HANDLE consoleHandle)
+{
+	int screenSize = SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y;
+	screen[screenSize - 1] = '\0';
+
+	DWORD _;
+	WriteConsoleOutputCharacter(consoleHandle, screen, screenSize, { 0, 0 }, &_);
+}
+
 // ranked by importance
 // TODO: add game restart
 // TODO: add game menu
 int main()
 {
+	using namespace std::chrono_literals;
+
 	srand(time(NULL));
-	const Maze maze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
-
-	const std::wstring map = maze.GetMap();
-	const Vector2n mapDim { maze.GetMapWidth(), maze.GetMapHeight() };
-	const Vector2n endPos = maze.GetExitPos();
-
-	_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
-
 	wchar_t* screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleActiveScreenBuffer(hConsole);
-	DWORD dwBytesWritten = 0;
+
 
 	auto lastFrameTime = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point thisFrameTime;
 
-	while (true)
+	Maze maze;
+
+	while (_wantToPlay)
 	{
-		thisFrameTime = std::chrono::steady_clock::now();
-		std::chrono::duration<float> elapsedTime = thisFrameTime - lastFrameTime;
-		lastFrameTime = thisFrameTime;
+		maze.Generate(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
 
-		HandleInput(map, mapDim, elapsedTime.count());
+		const std::wstring map = maze.GetMap();
+		const Vector2n mapDim { maze.GetMapWidth(), maze.GetMapHeight() };
+		const Vector2n endPos = maze.GetExitPos();
 
-		for (size_t x = 0; x < SCREEN_DIMENSIONS.X; x++)
-			WriteColumn(screen, x, map, mapDim);
+		_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
 
-		float distanceToEnd = GetNormalizedDistanceToEnd(endPos, mapDim);
-		WriteProgressToEnd(screen, 1, distanceToEnd);
-		if (_mapIsVisible)
-			WriteMap(screen, map, mapDim);
-		WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
+		while (!_gameOver)
+		{
+			thisFrameTime = std::chrono::steady_clock::now();
+			std::chrono::duration<float> elapsedTime = thisFrameTime - lastFrameTime;
+			lastFrameTime = thisFrameTime;
 
-		// print to console
-		int screenSize = SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y;
-		screen[screenSize - 1] = '\0';
-		WriteConsoleOutputCharacter(hConsole, screen, screenSize, { 0, 0 }, &dwBytesWritten);
+			HandleInput(map, mapDim, elapsedTime.count());
+
+			for (size_t x = 0; x < SCREEN_DIMENSIONS.X; x++)
+				WriteColumn(screen, x, map, mapDim);
+
+			float distanceToEnd = GetNormalizedDistanceToEnd(endPos, mapDim);
+			_gameOver = distanceToEnd < 0.05f;
+
+			WriteProgressToEnd(screen, 1, distanceToEnd);
+			if (_mapIsVisible)
+				WriteMap(screen, map, mapDim);
+			WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
+
+			Print(screen, hConsole);
+		}
+
+		WriteGameOver(screen);
+		Print(screen, hConsole);
+
+		char key;
+		std::cin.get(key);
+		_wantToPlay = (key == '1');
 	}
 }
