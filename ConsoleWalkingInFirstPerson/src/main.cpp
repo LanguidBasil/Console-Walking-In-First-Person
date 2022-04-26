@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <string>
+#include <string.h>
 #include <sstream>
 #include <chrono>
 #include <algorithm>
@@ -11,7 +12,7 @@
 const float PI = 3.14159f;
 
 const Vector2n SCREEN_DIMENSIONS { 120, 40 };
-const Vector2n MAZE_DIMENSIONS { 4, 4 };
+const Vector2n MAZE_DIMENSIONS { 6, 6 };
 
 const float MAX_RENDERING_DISTANCE = 16.0f;
 
@@ -126,21 +127,96 @@ static wchar_t GetFloorShadeFromScreenY(int y)
 	else						return ' ';
 }
 
-static void PrintDebugMessage(wchar_t* screen, float elapsedTime)
+static float GetNormalizedDistanceToEnd(const Vector2n& endPosition, const Vector2n& mapDimensions)
 {
-	swprintf_s(screen, 40, L"X=%3.2f, Y=%3.2f, A=%3.2f, FPS=%6.0f", _playerPos.X, _playerPos.Y, _playerAngle, 1.0f / elapsedTime);
+	const Vector2n mapDimWithoutWalls { mapDimensions.X - 2, mapDimensions.Y - 2 };
+	const float maxDistance = abs(mapDimWithoutWalls.X) + abs(mapDimWithoutWalls.Y);
+
+	const Vector2n difference { abs(endPosition.X - (int)_playerPos.X), abs(endPosition.Y - (int)_playerPos.Y)};
+	return ((difference.X + difference.Y) / maxDistance);
+}
+
+static void WriteColumn(wchar_t* screen, const int x, const std::wstring& map, const Vector2n& mapDimensions)
+{
+	float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_DIMENSIONS.X) * _playerFOV;
+	float distanceToWall = GetDistanceToWall(map, mapDimensions, _playerPos, rayAngle);
+
+	unsigned int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
+	unsigned int floorSize = SCREEN_DIMENSIONS.Y - ceilingSize;
+
+	// drawing from left top corner
+	for (size_t y = 0; y < SCREEN_DIMENSIONS.Y; y++)
+	{
+		size_t screenIndex = y * SCREEN_DIMENSIONS.X + x;
+
+		if (y <= ceilingSize)
+			screen[screenIndex] = ' ';
+		else if (y > ceilingSize && y <= floorSize)
+			screen[screenIndex] = GetWallShadeFromDistance(distanceToWall);
+		else
+			screen[screenIndex] = GetFloorShadeFromScreenY(y);
+	}
+}
+
+static void WriteProgressToEnd(wchar_t* screen, int screenYOffset, const float distanceToEnd)
+{
+	const wchar_t* message;
+	if (distanceToEnd < 0.05)
+		message = L"!!!!!!!!\0";
+	else if (0.05f  <= distanceToEnd && distanceToEnd < 0.125f)
+		message = L"########\0";
+	else if (0.125f <= distanceToEnd && distanceToEnd < 0.25f)
+		message = L"#######-\0";
+	else if (0.25f  <= distanceToEnd && distanceToEnd < 0.375f)
+		message = L"######--\0";
+	else if (0.375f <= distanceToEnd && distanceToEnd < 0.5f)
+		message = L"#####---\0";
+	else if (0.5f   <= distanceToEnd && distanceToEnd < 0.625f)
+		message = L"####----\0";
+	else if (0.625f <= distanceToEnd && distanceToEnd < 0.75f)
+		message = L"###-----\0";
+	else if (0.75f  <= distanceToEnd && distanceToEnd < 0.875f)
+		message = L"##------\0";
+	else if (0.875f <= distanceToEnd && distanceToEnd < 0.95f)
+		message = L"#-------\0";
+	else
+		message = L"--------\0";
+
+	for (size_t i = 0; i < wcslen(message); i++)
+		screen[screenYOffset * SCREEN_DIMENSIONS.X + i] = message[i];
+}
+
+static void WriteMap(wchar_t* screen, const std::wstring& map, const Vector2n& mapDimensions)
+{
+	int screenYOffset = 2;
+	for (size_t y = 0; y < mapDimensions.Y; y++)
+		for (size_t x = 0; x < mapDimensions.X; x++)
+			screen[(y + screenYOffset) * SCREEN_DIMENSIONS.X + x] = map[y * mapDimensions.X + x];
+	screen[((int)_playerPos.Y + screenYOffset) * SCREEN_DIMENSIONS.X + (int)_playerPos.X] = L'P';
+}
+
+static void WriteDebugMessage(wchar_t* screen, int screenYOffset, float elapsedTime, float distanceToEnd)
+{
+	wchar_t message[45];
+	swprintf(message, 45, L"X=%3.2f, Y=%3.2f, A=%3.2f, DtE=%1.2f, FPS=%5.0f\0",
+		_playerPos.X, _playerPos.Y, _playerAngle, distanceToEnd, 1.0f / elapsedTime);
+
+	for (size_t i = 0; i < wcslen(message); i++)
+		screen[screenYOffset * SCREEN_DIMENSIONS.X + i] = message[i];
 }
 
 // ranked by importance
-// TODO: add exit-meter that tells how close you are to exit
 // TODO: add game restart
 // TODO: add game menu
 int main()
 {
 	srand(time(NULL));
 	const Maze maze(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
-	const Vector2n mapDim { maze.GetMapWidth(), maze.GetMapHeight() };
+
 	const std::wstring map = maze.GetMap();
+	const Vector2n mapDim { maze.GetMapWidth(), maze.GetMapHeight() };
+	const Vector2n endPos = maze.GetExitPos();
+
 	_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
 
 	wchar_t* screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
@@ -160,36 +236,13 @@ int main()
 		HandleInput(map, mapDim, elapsedTime.count());
 
 		for (size_t x = 0; x < SCREEN_DIMENSIONS.X; x++)
-		{
-			float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_DIMENSIONS.X) * _playerFOV;
-			float distanceToWall = GetDistanceToWall(map, mapDim, _playerPos, rayAngle);
+			WriteColumn(screen, x, map, mapDim);
 
-			unsigned int ceilingSize = GetScreenCeilingSizeFromDistanceToWall(distanceToWall);
-			unsigned int floorSize = SCREEN_DIMENSIONS.Y - ceilingSize;
-
-			// drawing from left top corner
-			for (size_t y = 0; y < SCREEN_DIMENSIONS.Y; y++)
-			{
-				size_t screenIndex = y * SCREEN_DIMENSIONS.X + x;
-
-				if (y <= ceilingSize)
-					screen[screenIndex] = ' ';
-				else if (y > ceilingSize && y <= floorSize)
-					screen[screenIndex] = GetWallShadeFromDistance(distanceToWall);
-				else
-					screen[screenIndex] = GetFloorShadeFromScreenY(y);
-			}
-		}
-
+		float distanceToEnd = GetNormalizedDistanceToEnd(endPos, mapDim);
+		WriteProgressToEnd(screen, 1, distanceToEnd);
 		if (_mapIsVisible)
-		{
-			for (size_t y = 0; y < mapDim.Y; y++)
-				for (size_t x = 0; x < mapDim.X; x++)
-					screen[y * SCREEN_DIMENSIONS.X + x] = map[y * mapDim.X + x];
-			screen[(int)_playerPos.Y * SCREEN_DIMENSIONS.X + (int)_playerPos.X] = L'P';
-		}
-
-		PrintDebugMessage(screen, elapsedTime.count());
+			WriteMap(screen, map, mapDim);
+		WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
 
 		// print to console
 		int screenSize = SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y;
