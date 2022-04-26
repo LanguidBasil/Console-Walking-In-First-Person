@@ -28,6 +28,7 @@ float _playerFOV = PI / 4.0f;
 bool _wantToPlay = true; 
 bool _gameOver = false;
 bool _mapIsVisible = true;
+bool _inDebug = false;
 
 
 static bool WorldPosHasWall(const std::wstring& map, const Vector2n& mapDimensions, const Vector2f& worldPos)
@@ -77,6 +78,8 @@ static void HandleInput(const std::wstring& map, const Vector2n& mapDimensions, 
 
 	if (GetAsyncKeyState((unsigned short)'M') & 0x0001)
 		_mapIsVisible = !_mapIsVisible;
+	if (GetAsyncKeyState(VK_DELETE) & 0x0001)
+		_inDebug = !_inDebug;
 }
 
 static float GetDistanceToWall(const std::wstring& map, const Vector2n& mapDimensions, const Vector2f& worldPos, float angle)
@@ -264,21 +267,18 @@ int main()
 				WriteColumn(screen, x, map, mapDim);
 
 			float distanceToEnd = GetNormalizedDistanceToEnd(endPos, mapDim);
-			_gameOver = distanceToEnd < 0.05f;
+			_gameOver = distanceToEnd < 0.01f;
 
 			WriteProgressToEnd(screen, 1, distanceToEnd);
 			if (_mapIsVisible)
 				WriteMap(screen, map, mapDim);
-			WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
+			if (_inDebug)
+				WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
 
 			Print(screen, hConsole);
 		}
 
 		WriteGameOver(screen);
 		Print(screen, hConsole);
-
-		char key;
-		std::cin.get(key);
-		_wantToPlay = (key == '1');
 	}
 }
