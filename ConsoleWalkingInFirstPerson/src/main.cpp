@@ -267,7 +267,6 @@ static void GameInit(Maze& maze, std::wstring& map, Vector2n& mapDim, Vector2n& 
 
 // ranked by importance
 // TODO: add game menu
-// TODO-BUG: player can spawn near exit
 int main()
 {
 	using namespace std::chrono_literals;
