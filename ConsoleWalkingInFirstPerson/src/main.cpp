@@ -210,9 +210,8 @@ static void WriteProgressToEnd(wchar_t* screen, int screenYOffset, const float d
 		screen[screenYOffset * SCREEN_DIMENSIONS.X + i] = message[i];
 }
 
-static void WriteMap(wchar_t* screen, const std::wstring& map, const Vector2n& mapDimensions)
+static void WriteMap(wchar_t* screen, int screenYOffset, const std::wstring& map, const Vector2n& mapDimensions)
 {
-	int screenYOffset = 2;
 	for (size_t y = 0; y < mapDimensions.Y; y++)
 		for (size_t x = 0; x < mapDimensions.X; x++)
 			screen[(y + screenYOffset) * SCREEN_DIMENSIONS.X + x] = map[y * mapDimensions.X + x];
@@ -351,11 +350,11 @@ static void GameStart(wchar_t* screen, HANDLE consoleHandle)
 			float distanceToEnd = GetNormalizedDistanceToEnd(endPos, mapDim);
 			_gameOver = distanceToEnd < 0.01f;
 
-			WriteProgressToEnd(screen, 1, distanceToEnd);
+			WriteProgressToEnd(screen, 0, distanceToEnd);
 			if (_mapIsVisible)
-				WriteMap(screen, map, mapDim);
+				WriteMap(screen, 1, map, mapDim);
 			if (_inDebug)
-				WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
+				WriteDebugMessage(screen, SCREEN_DIMENSIONS.Y - 1, elapsedTime.count(), distanceToEnd);
 
 			Print(screen, consoleHandle);
 		}
