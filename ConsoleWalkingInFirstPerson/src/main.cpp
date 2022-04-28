@@ -21,14 +21,14 @@ const float PLAYER_WALK_SPEED = 5.0f;
 const float PLAYER_ROTATION_SPEED = 1.6f;
 
 
-Vector2f _playerPos { 10.0f, 10.0f };
-float _playerAngle = - PI / 2;
-float _playerFOV = PI / 4.0f;
+Vector2f _playerPos;
+float _playerAngle;
+float _playerFOV;
 
-bool _wantToPlay = true; 
-bool _gameOver = false;
-bool _mapIsVisible = true;
-bool _inDebug = false;
+bool _wantToPlay; 
+bool _gameOver;
+bool _mapIsVisible;
+bool _inDebug;
 
 
 static bool WorldPosHasWall(const std::wstring& map, const Vector2n& mapDimensions, const Vector2f& worldPos)
@@ -80,6 +80,18 @@ static void HandleInput(const std::wstring& map, const Vector2n& mapDimensions, 
 		_mapIsVisible = !_mapIsVisible;
 	if (GetAsyncKeyState(VK_DELETE) & 0x0001)
 		_inDebug = !_inDebug;
+}
+
+static bool HandleGameOverInput()
+{
+	while (true)
+	{
+		// VK_RETURN is 'enter' key
+		if (GetAsyncKeyState(VK_RETURN) & 0x0001)
+			return true;
+		else if (GetAsyncKeyState(VK_ESCAPE) & 0x0001)
+			return false;
+	}
 }
 
 static float GetDistanceToWall(const std::wstring& map, const Vector2n& mapDimensions, const Vector2f& worldPos, float angle)
@@ -203,9 +215,17 @@ static void WriteMap(wchar_t* screen, const std::wstring& map, const Vector2n& m
 
 static void WriteGameOver(wchar_t* screen)
 {
-	auto message = L"You won! Press 'space' if you want to try again...";
+	auto message = L"You won!";
 	for (size_t i = 0; i < wcslen(message); i++)
-		screen[i] = message[i];
+		screen[i + SCREEN_DIMENSIONS.X * 0] = message[i];
+
+	message = L"If you want to try again press enter";
+	for (size_t i = 0; i < wcslen(message); i++)
+		screen[i + SCREEN_DIMENSIONS.X * 1] = message[i];
+
+	message = L"If you want to exit press escape";
+	for (size_t i = 0; i < wcslen(message); i++)
+		screen[i + SCREEN_DIMENSIONS.X * 2] = message[i];
 }
 
 static void WriteDebugMessage(wchar_t* screen, int screenYOffset, float elapsedTime, float distanceToEnd)
@@ -227,9 +247,27 @@ static void Print(wchar_t* screen, HANDLE consoleHandle)
 	WriteConsoleOutputCharacter(consoleHandle, screen, screenSize, { 0, 0 }, &_);
 }
 
+static void GameInit(Maze& maze, std::wstring& map, Vector2n& mapDim, Vector2n& endPos)
+{
+	maze.Generate(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
+
+	_playerAngle = -PI / 2;
+	_playerFOV = PI / 4.0f;
+
+	_gameOver = false;
+	_mapIsVisible = true;
+	_inDebug = false;
+
+	_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
+
+	map = maze.GetMap();
+	mapDim = { maze.GetMapWidth(), maze.GetMapHeight() };
+	endPos = maze.GetExitPos();
+}
+
 // ranked by importance
-// TODO: add game restart
 // TODO: add game menu
+// TODO-BUG: player can spawn near exit
 int main()
 {
 	using namespace std::chrono_literals;
@@ -237,23 +275,23 @@ int main()
 	srand(time(NULL));
 	wchar_t* screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
 	SetConsoleActiveScreenBuffer(hConsole);
+
+	_wantToPlay = true;
 
 
 	auto lastFrameTime = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point thisFrameTime;
 
 	Maze maze;
+	const std::wstring map;
+	const Vector2n mapDim;
+	const Vector2n endPos;
 
 	while (_wantToPlay)
 	{
-		maze.Generate(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
-
-		const std::wstring map = maze.GetMap();
-		const Vector2n mapDim { maze.GetMapWidth(), maze.GetMapHeight() };
-		const Vector2n endPos = maze.GetExitPos();
-
-		_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
+		GameInit(maze, const_cast<std::wstring&>(map), const_cast<Vector2n&>(mapDim), const_cast<Vector2n&>(endPos));
 
 		while (!_gameOver)
 		{
@@ -280,5 +318,6 @@ int main()
 
 		WriteGameOver(screen);
 		Print(screen, hConsole);
+		_wantToPlay = HandleGameOverInput();
 	}
 }
