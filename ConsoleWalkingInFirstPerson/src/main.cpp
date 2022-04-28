@@ -17,7 +17,7 @@ const Vector2n MAZE_DIMENSIONS { 6, 6 };
 
 const float MAX_RENDERING_DISTANCE = 16.0f;
 
-const float PLAYER_WALK_SPEED = 5.0f;
+const float PLAYER_WALK_SPEED = 3.0f;
 const float PLAYER_ROTATION_SPEED = 1.6f;
 
 
@@ -39,6 +39,11 @@ static bool WorldPosHasWall(const std::wstring& map, const Vector2n& mapDimensio
 		return map[mapPosToCheck.Y * mapDimensions.X + mapPosToCheck.X] == '#';
 	else
 		return false;
+}
+
+static void HandleMenuInput()
+{
+	while (!(GetAsyncKeyState(VK_RETURN) & 0x0001)) {}
 }
 
 static void HandleInput(const std::wstring& map, const Vector2n& mapDimensions, float elapsedTime)
@@ -154,6 +159,7 @@ static float GetNormalizedDistanceToEnd(const Vector2n& endPosition, const Vecto
 	return ((difference.X + difference.Y) / maxDistance);
 }
 
+
 static void WriteColumn(wchar_t* screen, const int x, const std::wstring& map, const Vector2n& mapDimensions)
 {
 	float rayAngle = (_playerAngle - _playerFOV / 2.0f) + ((float)x / (float)SCREEN_DIMENSIONS.X) * _playerFOV;
@@ -247,6 +253,55 @@ static void Print(wchar_t* screen, HANDLE consoleHandle)
 	WriteConsoleOutputCharacter(consoleHandle, screen, screenSize, { 0, 0 }, &_);
 }
 
+static void WriteStartMenu(wchar_t* screen)
+{
+	auto message =
+		LR"(.__                            .___   __           .__                                                                  )"
+		LR"(|__|  __ __  ______  ____    __| _/ _/  |_  ____   |  |    ____ ___  __  ____     _____  _____   ________  ____    _____)"
+		LR"(|  | |  |  \/  ___/_/ __ \  / __ |  \   __\/  _ \  |  |   /  _ \\  \/ /_/ __ \   /     \ \__  \  \___   /_/ __ \  /  ___)"
+		LR"(|  | |  |  /\___ \ \  ___/ / /_/ |   |  | (  <_> ) |  |__(  <_> )\   / \  ___/  |  Y Y  \ / __ \_ /    / \  ___/  \___ \)"
+		LR"(|__| |____//____  > \___  >\____ |   |__|  \____/  |____/ \____/  \_/   \___  > |__|_|  /(____  //_____ \ \___  >/____  )"
+		LR"(                \/      \/      \/                                          \/        \/      \/       \/     \/      \/)"
+		LR"(                                                                                                                        )"
+		LR"(      ____ _  _ ____     __  ____ ____ ____ ____    ____ __ _ ____ ____ ____ __ __ _  ___    ____ _  _ __ ____          )"
+		LR"(     (  _ / )( (_  _)   / _\(  __(_  _(  __(  _ \  (  __(  ( (_  _(  __(  _ (  (  ( \/ __)  (_  _/ )( (  / ___)         )"
+		LR"(      ) _ ) \/ ( )(    /    \) _)  )(  ) _) )   /   ) _)/    / )(  ) _) )   /)(/    ( (_ \    )( ) __ ()(\___ \         )"
+		LR"(     (____\____/(__)   \_/\_(__)  (__)(____(__\_)  (____\_)__)(__)(____(__\_(__\_)__)\___/   (__)\_)(_(__(____/         )"
+		LR"(      __    __  ____ ____     __  __ _ ____      __ __  _    __ _  __ ____    ____  __     ____ _  _ ____ ____          )"
+		LR"(     (  )  / _\/ ___(_  _)   /  \(  ( (  __)_   (  (( \/ )  (  ( \/  (_  _)  / ___)/  \   / ___/ )( (  _ (  __)         )"
+		LR"(     / (_//    \___ \ )(    (  O /    /) _)( )   )( / \/ \  /    (  O ))(    \___ (  O )  \___ ) \/ ()   /) _)          )"
+		LR"(     \____\_/\_(____/(__)    \__/\_)__(____(/   (__)\_)(_/  \_)__)\__/(__)   (____/\__/   (____\____(__\_(____)         )"
+		LR"(      _  _ _  _ ____ ____ ____    __    ____ ____ __  __ _ ____     __  __ _ _  _ _  _  __ ____ ____                    )"
+		LR"(     / )( / )( (  __(  _ (  __)  (  )  / ___(_  _/ _\(  ( (    \   / _\(  ( ( \/ ( \/ )/  (  _ (  __)                   )"
+		LR"(     \ /\ ) __ () _) )   /) _)    )(   \___ \ )(/    /    /) D (  /    /    /)  // \/ (  O )   /) _) _                  )"
+		LR"(     (_/\_\_)(_(____(__\_(____)  (__)  (____/(__\_/\_\_)__(____/  \_/\_\_)__(__/ \_)(_/\__(__\_(____(_)                 )"
+		LR"(                                                                                                                        )"
+		LR"(                                                                                                                        )"
+		LR"(                                                    controls                                                            )"
+		LR"(                                    wasd - to move            arrows - to look                                          )";
+
+	auto messageLength = wcslen(message);
+	for (size_t i = 0; i < wcslen(screen); i++)
+		screen[i] = i < messageLength ? message[i] : ' ';
+}
+
+
+static void ConsoleInit(wchar_t*& screen, HANDLE& consoleHandle)
+{
+	srand(time(NULL));
+	screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
+	consoleHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
+	SetConsoleActiveScreenBuffer(consoleHandle);
+}
+
+static void GameMenu(wchar_t* screen, HANDLE consoleHandle)
+{
+	WriteStartMenu(screen);
+	Print(screen, consoleHandle);
+	HandleMenuInput();
+}
+
 static void GameInit(Maze& maze, std::wstring& map, Vector2n& mapDim, Vector2n& endPos)
 {
 	maze.Generate(MAZE_DIMENSIONS.X, MAZE_DIMENSIONS.Y);
@@ -255,7 +310,7 @@ static void GameInit(Maze& maze, std::wstring& map, Vector2n& mapDim, Vector2n& 
 	_playerFOV = PI / 4.0f;
 
 	_gameOver = false;
-	_mapIsVisible = true;
+	_mapIsVisible = false;
 	_inDebug = false;
 
 	_playerPos = Vector2f(maze.GetStartPos()) + Vector2f(0.5f, 0.5f);
@@ -265,18 +320,8 @@ static void GameInit(Maze& maze, std::wstring& map, Vector2n& mapDim, Vector2n& 
 	endPos = maze.GetExitPos();
 }
 
-// ranked by importance
-// TODO: add game menu
-int main()
+static void GameStart(wchar_t* screen, HANDLE consoleHandle)
 {
-	using namespace std::chrono_literals;
-
-	srand(time(NULL));
-	wchar_t* screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
-	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
-	SetConsoleActiveScreenBuffer(hConsole);
-
 	_wantToPlay = true;
 
 
@@ -312,11 +357,21 @@ int main()
 			if (_inDebug)
 				WriteDebugMessage(screen, 0, elapsedTime.count(), distanceToEnd);
 
-			Print(screen, hConsole);
+			Print(screen, consoleHandle);
 		}
 
 		WriteGameOver(screen);
-		Print(screen, hConsole);
+		Print(screen, consoleHandle);
 		_wantToPlay = HandleGameOverInput();
 	}
+}
+
+
+int main()
+{
+	wchar_t* screen = nullptr; HANDLE consoleHandle;
+	ConsoleInit(screen, consoleHandle);
+
+	GameMenu(screen, consoleHandle);
+	GameStart(screen, consoleHandle);
 }
