@@ -257,8 +257,8 @@ static void WriteStartMenu(wchar_t* screen)
 	auto message =
 		LR"(.__                            .___   __           .__                                                                  )"
 		LR"(|__|  __ __  ______  ____    __| _/ _/  |_  ____   |  |    ____ ___  __  ____     _____  _____   ________  ____    _____)"
-		LR"(|  | |  |  \/  ___/_/ __ \  / __ |  \   __\/  _ \  |  |   /  _ \\  \/ /_/ __ \   /     \ \__  \  \___   /_/ __ \  /  ___)"
-		LR"(|  | |  |  /\___ \ \  ___/ / /_/ |   |  | (  <_> ) |  |__(  <_> )\   / \  ___/  |  Y Y  \ / __ \_ /    / \  ___/  \___ \)"
+		LR"(|  | |  |  \/  ___/_/ __ \  / __ |  \   __\/  _ \  |  |   /  _ \\  \/ / / __ \   /     \ \__  \  \___   /_/ __ \  /  ___)"
+		LR"(|  | |  |  /\___ \ \  ___/ / /_/ |   |  | (  <_> ) |  |__(  <_> )\   / |  ___/  |  Y Y  \ / __ \_ /    / \  ___/  \___ \)"
 		LR"(|__| |____//____  > \___  >\____ |   |__|  \____/  |____/ \____/  \_/   \___  > |__|_|  /(____  //_____ \ \___  >/____  )"
 		LR"(                \/      \/      \/                                          \/        \/      \/       \/     \/      \/)"
 		LR"(                                                                                                                        )"
@@ -277,7 +277,12 @@ static void WriteStartMenu(wchar_t* screen)
 		LR"(                                                                                                                        )"
 		LR"(                                                                                                                        )"
 		LR"(                                                    controls                                                            )"
-		LR"(                                    wasd - to move            arrows - to look                                          )";
+		LR"(                                    wasd - to move            arrows - to look                                          )"
+		LR"(                                                                                                                        )"
+		LR"(                                                                                                                        )"
+		LR"(                                               press enter to start                                                     )"
+		LR"(                                                                                                                        )"
+		LR"(                                                                                                                        )";
 
 	auto messageLength = wcslen(message);
 	for (size_t i = 0; i < wcslen(screen); i++)
@@ -288,9 +293,18 @@ static void WriteStartMenu(wchar_t* screen)
 static void ConsoleInit(wchar_t*& screen, HANDLE& consoleHandle)
 {
 	srand(time(NULL));
+
 	screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
 	consoleHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
+
+	// set console font
+	CONSOLE_FONT_INFOEX fontex;
+	fontex.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+	GetCurrentConsoleFontEx(consoleHandle, 0, &fontex);
+	fontex.dwFontSize.Y = 16;
+	SetCurrentConsoleFontEx(consoleHandle, NULL, &fontex);
+
 	SetConsoleActiveScreenBuffer(consoleHandle);
 }
 
