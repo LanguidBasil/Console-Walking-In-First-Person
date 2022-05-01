@@ -252,7 +252,7 @@ static void Print(wchar_t* screen, HANDLE consoleHandle)
 	WriteConsoleOutputCharacter(consoleHandle, screen, screenSize, { 0, 0 }, &_);
 }
 
-static void WriteStartMenu(wchar_t* screen)
+static inline void WriteStartMenu(wchar_t* screen)
 {
 	auto message =
 		LR"(.__                            .___   __           .__                                                                  )"
@@ -285,15 +285,14 @@ static void WriteStartMenu(wchar_t* screen)
 		LR"(                                                                                                                        )";
 
 	auto messageLength = wcslen(message);
-	for (size_t i = 0; i < wcslen(screen); i++)
+	auto screenSize = SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y;
+	for (size_t i = 0; i < screenSize; i++)
 		screen[i] = i < messageLength ? message[i] : ' ';
 }
 
 
 static void ConsoleInit(wchar_t*& screen, HANDLE& consoleHandle)
 {
-	srand(time(NULL));
-
 	screen = new wchar_t[SCREEN_DIMENSIONS.X * SCREEN_DIMENSIONS.Y];
 	consoleHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
@@ -382,6 +381,8 @@ static void GameStart(wchar_t* screen, HANDLE consoleHandle)
 
 int main()
 {
+	srand(time(NULL));
+
 	wchar_t* screen = nullptr; HANDLE consoleHandle;
 	ConsoleInit(screen, consoleHandle);
 
