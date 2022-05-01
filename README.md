@@ -23,6 +23,6 @@ Controlls: <br/>
   'M' - show map <br/>
 </details>
 
-Links:
-[text to ascii converter](https://patorjk.com/software/taag/)
-[maze generation algorithm](https://www.youtube.com/watch?v=Y37-gB83HKE)
+Links: <br/>
+[Text to ascii converter](https://patorjk.com/software/taag/) <br/>
+[Maze generation algorithm](https://www.youtube.com/watch?v=Y37-gB83HKE)
