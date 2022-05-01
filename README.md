@@ -22,3 +22,7 @@ Controlls: <br/>
   'Delete' - debug message <br/>
   'M' - show map <br/>
 </details>
+
+Links:
+[text to ascii converter](https://patorjk.com/software/taag/)
+[maze generation algorithm](https://www.youtube.com/watch?v=Y37-gB83HKE)
