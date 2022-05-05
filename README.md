@@ -23,6 +23,8 @@ Controlls: <br/>
   'M' - show map <br/>
 </details>
 
+You can download game on [itch.io](https://languidbasil.itch.io/i-used-to-love-mazes)
+
 Links: <br/>
 [Text to ascii converter](https://patorjk.com/software/taag/) <br/>
 [Maze generation algorithm](https://www.youtube.com/watch?v=Y37-gB83HKE)
